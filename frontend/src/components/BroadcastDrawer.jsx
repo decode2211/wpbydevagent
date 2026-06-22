@@ -1,25 +1,15 @@
 import React, { useState, useEffect } from "react";
 import apiClient from "../api/client";
-import { X, Send, Users, Megaphone, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, CheckCircle2 } from "lucide-react";
 
-/**
- * BroadcastDrawer Component
- * Slides in from the right to compose a broadcast and select recipients from the active tenant's contacts.
- * 
- * Props:
- * - isOpen: boolean (drawer visibility)
- * - onClose: function (closes the drawer)
- * - activeTenantId: string
- */
 export default function BroadcastDrawer({ isOpen, onClose, activeTenantId }) {
   const [template, setTemplate] = useState("");
   const [contacts, setContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const [status, setStatus] = useState(null); // { type: 'success' | 'error', message: string }
+  const [status, setStatus] = useState(null);
 
-  // Load known contacts from the session list
   useEffect(() => {
     if (!isOpen || !activeTenantId) return;
 
@@ -29,7 +19,6 @@ export default function BroadcastDrawer({ isOpen, onClose, activeTenantId }) {
         setStatus(null);
         setSelectedContacts([]);
         const response = await apiClient.get(`/api/tenants/${activeTenantId}/sessions`);
-        // Map to unique list of phone numbers
         const numbers = response.data.map(sess => sess.customer_phone);
         const uniqueNumbers = [...new Set(numbers)];
         setContacts(uniqueNumbers);
@@ -43,7 +32,6 @@ export default function BroadcastDrawer({ isOpen, onClose, activeTenantId }) {
     loadContacts();
   }, [isOpen, activeTenantId]);
 
-  // Toggle selection helper
   const toggleContact = (phone) => {
     setSelectedContacts(prev =>
       prev.includes(phone)
@@ -52,7 +40,6 @@ export default function BroadcastDrawer({ isOpen, onClose, activeTenantId }) {
     );
   };
 
-  // Toggle all helper
   const toggleAll = () => {
     if (selectedContacts.length === contacts.length) {
       setSelectedContacts([]);
@@ -61,16 +48,8 @@ export default function BroadcastDrawer({ isOpen, onClose, activeTenantId }) {
     }
   };
 
-  // Submit broadcast handler
   const handleSendBroadcast = async () => {
-    if (selectedContacts.length === 0) {
-      setStatus({ type: "error", message: "Please select at least one recipient." });
-      return;
-    }
-    if (!template.trim()) {
-      setStatus({ type: "error", message: "Broadcast message body cannot be empty." });
-      return;
-    }
+    if (selectedContacts.length === 0 || !template.trim()) return;
 
     try {
       setSending(true);
@@ -81,18 +60,12 @@ export default function BroadcastDrawer({ isOpen, onClose, activeTenantId }) {
         template_message: template,
       });
 
-      setStatus({
-        type: "success",
-        message: `Broadcast successfully queued for ${selectedContacts.length} recipient(s).`,
-      });
+      setStatus({ type: "success", message: `Sent to ${selectedContacts.length} recipients` });
       setTemplate("");
       setSelectedContacts([]);
     } catch (err) {
       console.error("Broadcast failed:", err);
-      setStatus({
-        type: "error",
-        message: err.response?.data?.detail || "Failed to trigger broadcast dispatch.",
-      });
+      setStatus({ type: "error", message: "Failed to send broadcast." });
     } finally {
       setSending(false);
     }
@@ -102,137 +75,106 @@ export default function BroadcastDrawer({ isOpen, onClose, activeTenantId }) {
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Background Backdrop Overlay */}
-      <div
-        className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-[#000000] opacity-50 transition-opacity" onClick={onClose} />
 
-      <div className="absolute inset-y-0 right-0 max-w-full flex">
-        {/* Drawer Window */}
-        <div className="w-screen max-w-md bg-[#0f172a] border-l border-slate-800 shadow-2xl flex flex-col justify-between">
+      <div className="absolute inset-y-0 right-0 flex max-w-full">
+        <div className="w-[420px] bg-[#141414] border-l border-[#2A2A2A] flex flex-col shadow-2xl">
           
-          {/* Drawer Header */}
-          <div className="px-6 py-5 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <Megaphone className="w-5 h-5 text-indigo-400" />
-              <h2 className="text-base font-bold text-slate-100 tracking-wide">Compose Broadcast</h2>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors duration-200"
-            >
-              <X className="w-4 h-4" />
+          {/* Header */}
+          <div className="px-6 py-5 border-b border-[#2A2A2A] flex items-center justify-between">
+            <h2 className="text-base font-bold text-[#F5F5F5]">Send Broadcast</h2>
+            <button onClick={onClose} className="text-[#888] hover:text-[#F5F5F5] transition-colors">
+              <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Drawer Scroll Body */}
-          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-            {status && (
-              <div
-                className={`p-4 rounded-xl border flex items-start gap-3 animate-fade-in ${
-                  status.type === "success"
-                    ? "bg-emerald-950/20 border-emerald-900/60 text-emerald-300"
-                    : "bg-red-950/20 border-red-900/60 text-red-300"
-                }`}
-              >
-                {status.type === "success" ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-                )}
-                <div className="text-xs font-medium leading-relaxed">{status.message}</div>
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+            
+            {/* Success State */}
+            {status && status.type === "success" && (
+              <div className="flex items-center justify-center flex-col py-8 animate-fade-in">
+                <CheckCircle2 className="w-12 h-12 text-[#00D4AA] mb-4" />
+                <div className="text-[#F5F5F5] font-medium text-sm">{status.message}</div>
               </div>
             )}
 
-            {/* Template Composition */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Broadcast Template
-              </label>
-              <textarea
-                value={template}
-                onChange={(e) => setTemplate(e.target.value)}
-                placeholder="Enter template content. Supports WhatsApp markdown: *bold*, _italic_."
-                rows={5}
-                className="w-full bg-[#18222f] border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none transition-all duration-300"
-              />
-            </div>
-
-            {/* Recipient Selection */}
-            <div className="flex flex-col gap-3">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-slate-400" />
-                  Select Recipients ({selectedContacts.length})
-                </label>
-                {contacts.length > 0 && (
-                  <button
-                    onClick={toggleAll}
-                    className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold uppercase tracking-wider"
-                  >
-                    {selectedContacts.length === contacts.length ? "Deselect All" : "Select All"}
-                  </button>
-                )}
+            {/* Error State */}
+            {status && status.type === "error" && (
+              <div className="p-3 bg-[#FF4757]/10 border border-[#FF4757]/30 text-[#FF4757] text-sm rounded">
+                {status.message}
               </div>
+            )}
 
-              {loading ? (
-                <div className="text-xs text-slate-500 py-6 text-center">Loading contact directory...</div>
-              ) : contacts.length === 0 ? (
-                <div className="text-xs text-slate-600 py-6 text-center bg-[#18222f]/30 border border-slate-800/40 rounded-xl">
-                  No registered numbers found for this workspace.
+            {(!status || status.type === "error") && (
+              <>
+                {/* Textarea */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-semibold text-[#888]">MESSAGE</label>
+                  <textarea
+                    value={template}
+                    onChange={(e) => setTemplate(e.target.value)}
+                    placeholder="Type your broadcast message..."
+                    rows={6}
+                    className="w-full bg-[#0F0F0F] border border-[#2A2A2A] rounded p-3 text-sm text-[#F5F5F5] placeholder-[#555] focus:outline-none focus:border-[#555] transition-colors resize-none"
+                  />
                 </div>
-              ) : (
-                <div className="border border-slate-800 rounded-xl overflow-hidden bg-[#18222f]/25 divide-y divide-slate-800 max-h-56 overflow-y-auto">
-                  {contacts.map((phone) => {
-                    const isChecked = selectedContacts.includes(phone);
-                    return (
-                      <label
-                        key={phone}
-                        className="flex items-center gap-3 px-4 py-3.5 hover:bg-[#1e293b]/30 cursor-pointer transition-colors duration-150 select-none text-slate-200 text-xs"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleContact(phone)}
-                          className="rounded border-slate-800 bg-slate-900 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900"
-                        />
-                        <span className="font-medium font-mono">{phone}</span>
-                      </label>
-                    );
-                  })}
+
+                {/* Recipients */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-semibold text-[#888]">
+                      RECIPIENTS ({selectedContacts.length})
+                    </label>
+                    {contacts.length > 0 && (
+                      <button onClick={toggleAll} className="text-xs text-[#00D4AA] hover:text-[#00D4AA]/80 font-medium transition-colors">
+                        {selectedContacts.length === contacts.length ? "Deselect All" : "Select All"}
+                      </button>
+                    )}
+                  </div>
+
+                  {loading ? (
+                    <div className="text-sm text-[#555] py-4">Loading contacts...</div>
+                  ) : contacts.length === 0 ? (
+                    <div className="text-sm text-[#555] py-4">No contacts found.</div>
+                  ) : (
+                    <div className="border border-[#2A2A2A] rounded bg-[#0F0F0F] overflow-hidden">
+                      <div className="max-h-[240px] overflow-y-auto divide-y divide-[#2A2A2A]">
+                        {contacts.map((phone) => {
+                          const isChecked = selectedContacts.includes(phone);
+                          return (
+                            <label key={phone} className="flex items-center gap-3 px-4 py-3 hover:bg-[#1A1A1A] cursor-pointer transition-colors">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => toggleContact(phone)}
+                                className="w-4 h-4 rounded border-[#555] bg-transparent text-[#7C5CFC] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                              />
+                              <span className="text-sm text-[#F5F5F5] font-medium">{phone}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
 
-          {/* Drawer Footer Actions */}
-          <div className="px-6 py-5 border-t border-slate-800 bg-slate-900/30 flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-3 rounded-xl border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/30 text-xs font-semibold tracking-wider uppercase transition-all duration-300"
-            >
-              Cancel
-            </button>
+          {/* Footer Action */}
+          <div className="p-6 border-t border-[#2A2A2A]">
             <button
               onClick={handleSendBroadcast}
-              disabled={sending || selectedContacts.length === 0 || !template.trim()}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold tracking-wider uppercase transition-all duration-300 shadow-md shadow-indigo-950/30"
+              disabled={sending || selectedContacts.length === 0 || !template.trim() || status?.type === "success"}
+              className="w-full py-3 rounded bg-[#7C5CFC] text-white font-bold text-sm hover:bg-[#6b4de0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               {sending ? (
-                <>
-                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
-                  <span>Sending...</span>
-                </>
-              ) : (
-                <>
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Send Broadcast</span>
-                </>
-              )}
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : null}
+              Send to Selected
             </button>
           </div>
-
         </div>
       </div>
     </div>

@@ -3,46 +3,32 @@ import TenantSwitcher from "./components/TenantSwitcher";
 import ChatMonitor from "./components/ChatMonitor";
 import ChatThread from "./components/ChatThread";
 import BroadcastDrawer from "./components/BroadcastDrawer";
-import { Bot, Megaphone, HelpCircle } from "lucide-react";
+import { Megaphone, Bell, User } from "lucide-react";
 
 export default function App() {
   const [activeTenantId, setActiveTenantId] = useState("");
   const [activeSessionId, setActiveSessionId] = useState("");
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
 
-  // When switching workspaces, reset the active session selection to avoid showing mismatched chats
   const handleTenantChange = (tenantId) => {
     setActiveTenantId(tenantId);
     setActiveSessionId("");
   };
 
   return (
-    <div className="flex h-screen w-screen bg-[#020617] overflow-hidden text-slate-100 font-sans">
+    <div className="flex h-screen w-screen bg-[#0F0F0F] overflow-hidden text-[#F5F5F5] font-['Inter']">
       
-      {/* LEFT COLUMN: Sidebar (Tenant Switcher & Sessions Monitor) */}
-      <aside className="w-80 border-r border-slate-800 bg-[#0b1329] flex flex-col justify-between select-none">
+      {/* LEFT COLUMN: Sidebar */}
+      <aside className="w-[260px] border-r border-[#222] bg-[#141414] flex flex-col justify-between select-none shrink-0">
         <div className="flex-1 flex flex-col min-h-0">
           
-          {/* Sidebar Header Brand */}
-          <div className="flex items-center gap-2.5 px-6 py-5 border-b border-slate-800 bg-slate-900/10">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-950/50">
-              <Bot className="w-4.5 h-4.5" />
-            </div>
-            <div>
-              <h1 className="font-bold text-sm text-slate-100 tracking-wider">Antigravity AI</h1>
-              <p className="text-[10px] text-slate-500 font-medium tracking-wide">WhatsApp Support Portal</p>
-            </div>
-          </div>
-
-          {/* Sidebar Section: Workspace Selector */}
-          <div className="p-4 border-b border-slate-800 bg-slate-950/15">
+          <div className="border-b border-[#222]">
             <TenantSwitcher
               activeTenantId={activeTenantId}
               setActiveTenantId={handleTenantChange}
             />
           </div>
 
-          {/* Sidebar Section: Chat Sessions Live Monitor */}
           <div className="flex-1 min-h-0">
             <ChatMonitor
               activeTenantId={activeTenantId}
@@ -50,61 +36,62 @@ export default function App() {
               setActiveSessionId={setActiveSessionId}
             />
           </div>
-
         </div>
 
         {/* Sidebar Footer Details */}
-        <div className="p-4 border-t border-slate-800 bg-slate-900/15 flex items-center justify-between text-[10px] text-slate-500 font-medium">
-          <span>Engine: LangGraph (v3.5)</span>
-          <span className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            v1.0.0
-          </span>
+        <div className="p-4 border-t border-[#222] flex items-center justify-between text-[#888]">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-full bg-[#1A1A1A] flex items-center justify-center border border-[#2A2A2A]">
+              <User className="w-3.5 h-3.5 text-[#555]" />
+            </div>
+          </div>
+          <svg className="w-4 h-4 text-[#555] hover:text-[#888] cursor-pointer transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
         </div>
       </aside>
 
-      {/* RIGHT COLUMN: Viewport Area (Chat History Thread View) */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[#0f172a] h-full relative">
-        {/* Navigation Bar / Toolbar */}
-        <header className="px-6 py-4 border-b border-slate-800 bg-[#0b1329] flex items-center justify-between z-10">
-          <div className="flex flex-col">
-            <h2 className="text-sm font-bold text-slate-200 tracking-wider uppercase">
-              {activeTenantId === "tenant_luxfurn" ? "LuxFurn Dashboard" : activeTenantId === "tenant_autocare" ? "AutoCare Dashboard" : "Sales & Support"}
-            </h2>
-            <p className="text-[10px] text-slate-400">
-              Review conversation history logs or issue template broadcasts.
-            </p>
+      {/* RIGHT COLUMN: Viewport Area */}
+      <main className="flex-1 flex flex-col min-w-0 bg-[#0F0F0F] h-full relative">
+        <header className="h-[56px] px-6 border-b border-[#1A1A1A] bg-[#0F0F0F] flex items-center justify-between shrink-0 z-10">
+          <div className="flex items-center text-sm font-medium text-[#888]">
+            <span>Nexus</span>
+            <span className="mx-2">/</span>
+            <span className="text-[#F5F5F5]">{activeTenantId === "tenant_luxfurn" ? "LuxFurn" : activeTenantId === "tenant_autocare" ? "AutoCare" : "Workspace"}</span>
+            <span className="mx-2">/</span>
+            <span>Chat</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {activeTenantId && (
               <button
                 onClick={() => setIsBroadcastOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs uppercase tracking-wider transition-all duration-300 shadow-md shadow-indigo-950/40"
+                className="flex items-center gap-2 px-3 py-1.5 rounded bg-[#141414] hover:bg-[#1A1A1A] border border-[#2A2A2A] text-[#F5F5F5] text-xs font-medium transition-all"
               >
-                <Megaphone className="w-3.5 h-3.5" />
+                <Megaphone className="w-3.5 h-3.5 text-[#888]" />
                 <span>Broadcast</span>
               </button>
             )}
-            <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 transition-colors duration-200 cursor-pointer">
-              <HelpCircle className="w-4.5 h-4.5" />
+            <button className="text-[#888] hover:text-[#F5F5F5] transition-colors">
+              <Bell className="w-4 h-4" />
+            </button>
+            <div className="w-7 h-7 rounded-full bg-[#1A1A1A] border border-[#2A2A2A] flex items-center justify-center">
+              <User className="w-3.5 h-3.5 text-[#555]" />
             </div>
           </div>
         </header>
 
-        {/* Chat History Viewport */}
         <div className="flex-1 min-h-0">
           <ChatThread activeSessionId={activeSessionId} />
         </div>
       </main>
 
-      {/* Broadcast Slide-out Panel */}
       <BroadcastDrawer
         isOpen={isBroadcastOpen}
         onClose={() => setIsBroadcastOpen(false)}
         activeTenantId={activeTenantId}
       />
-
     </div>
   );
 }

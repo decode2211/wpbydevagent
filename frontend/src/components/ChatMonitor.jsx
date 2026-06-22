@@ -1,17 +1,7 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../api/client";
-import { MessageSquare, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Search, Inbox } from "lucide-react";
 
-/**
- * ChatMonitor Component
- * Displays a list of active conversation threads/sessions for the selected tenant.
- * Polls the backend every 5 seconds to get real-time status and message updates.
- * 
- * Props:
- * - activeTenantId: string
- * - activeSessionId: string
- * - setActiveSessionId: function
- */
 export default function ChatMonitor({ activeTenantId, activeSessionId, setActiveSessionId }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,110 +21,112 @@ export default function ChatMonitor({ activeTenantId, activeSessionId, setActive
     }
 
     fetchSessions();
-
-    // Set up polling interval every 5 seconds for live status monitoring
     const interval = setInterval(fetchSessions, 5000);
     return () => clearInterval(interval);
   }, [activeTenantId]);
 
-  // Format date helper
   const formatTime = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHrs = Math.floor(diffMins / 60);
+    
+    if (diffMins < 60) return `${diffMins || 1}m ago`;
+    if (diffHrs < 24) return `${diffHrs}h ago`;
+    return date.toLocaleDateString([], { month: "short", day: "numeric" });
   };
 
-  // Render status badge helper
   const renderStatusBadge = (status) => {
-    let bg = "bg-slate-800 text-slate-400";
-    let icon = <Clock className="w-3 h-3" />;
+    let bg = "bg-[#2A2A2A] text-[#888]";
+    let dot = "bg-[#555]";
     
     if (status === "RESOLVED") {
-      bg = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-      icon = <CheckCircle className="w-3 h-3" />;
+      bg = "bg-[#00D4AA]/10 text-[#00D4AA]";
+      dot = "bg-[#00D4AA]";
     } else if (status === "AGENT_RESPONDING") {
-      bg = "bg-amber-500/20 text-amber-400 border border-amber-500/30";
-      icon = <Clock className="w-3 h-3" />;
+      bg = "bg-[#F59E0B]/10 text-[#F59E0B]";
+      dot = "bg-[#F59E0B]";
     } else if (status === "NEEDS_HUMAN") {
-      bg = "bg-red-500/20 text-red-400 border border-red-500/30";
-      icon = <AlertCircle className="w-3 h-3" />;
-    } else if (status === "ERROR") {
-      bg = "bg-red-900/30 text-red-500 border border-red-900/50";
-      icon = <AlertCircle className="w-3 h-3" />;
+      bg = "bg-[#FF4757]/10 text-[#FF4757] animate-border-pulse border border-[#FF4757]/30";
+      dot = "bg-[#FF4757] animate-pulse";
     }
 
     return (
-      <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${bg}`}>
-        {icon}
+      <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium tracking-wide uppercase ${bg}`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${dot}`}></span>
         {status.replace("_", " ")}
       </span>
     );
   };
 
-  if (loading && sessions.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500 mb-2"></div>
-        <div className="text-xs">Loading conversations...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/35">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-slate-400" />
-          <span className="text-sm font-semibold text-slate-300">Chats ({sessions.length})</span>
+    <div className="flex flex-col h-full border-t border-[#222]">
+      <div className="p-4 border-b border-[#222]">
+        <div className="flex items-center bg-[#0F0F0F] rounded border border-[#2A2A2A] px-3 py-1.5 focus-within:border-[#555] transition-colors">
+          <Search className="w-3.5 h-3.5 text-[#555]" />
+          <input 
+            type="text" 
+            placeholder="Search conversations..." 
+            className="bg-transparent border-none outline-none text-xs text-[#F5F5F5] ml-2 w-full placeholder-[#555]"
+          />
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {sessions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center text-slate-500">
-            <MessageSquare className="w-8 h-8 text-slate-700 mb-2" />
-            <div className="text-xs font-medium">No conversation sessions found</div>
-            <div className="text-[10px] text-slate-600 mt-1 max-w-[180px]">
-              New sessions appear automatically when a customer messages WhatsApp.
-            </div>
+        {loading && sessions.length === 0 ? (
+          <div className="flex flex-col gap-2">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="animate-pulse flex items-start gap-3 p-3 rounded bg-[#1A1A1A]">
+                <div className="w-full flex flex-col gap-2">
+                  <div className="h-3 bg-[#2A2A2A] rounded w-24"></div>
+                  <div className="h-2 bg-[#2A2A2A] rounded w-full"></div>
+                  <div className="h-4 bg-[#2A2A2A] rounded w-16 mt-1"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Inbox className="w-8 h-8 text-[#2A2A2A] mb-3" />
+            <div className="text-xs text-[#888]">No active conversations</div>
           </div>
         ) : (
           sessions.map((sess) => {
             const isSelected = sess.session_id === activeSessionId;
             const needsHuman = sess.status === "NEEDS_HUMAN";
+            const isUnread = sess.status === "NEEDS_HUMAN" || sess.status === "WAITING_FOR_BOT";
 
             return (
               <button
                 key={sess.session_id}
                 onClick={() => setActiveSessionId(sess.session_id)}
-                className={`w-full flex flex-col p-3.5 rounded-xl border text-left transition-all duration-300 ${
+                className={`w-full flex flex-col p-3 rounded border text-left transition-colors relative ${
                   isSelected
-                    ? "bg-slate-800 border-slate-700 shadow-md shadow-slate-950/20"
-                    : needsHuman
-                    ? "bg-red-950/10 border-red-950/80 hover:bg-red-950/20 animate-border-pulse"
-                    : "bg-slate-900/25 border-slate-800/60 hover:bg-slate-800/35 hover:border-slate-800"
+                    ? "bg-[#1E1A2E] border-[#1E1A2E] border-l-[3px] border-l-[#7C5CFC]"
+                    : "bg-transparent border-transparent hover:bg-[#1A1A1A] border-l-[3px] border-l-transparent hover:border-[#1A1A1A]"
                 }`}
               >
-                <div className="flex justify-between items-start w-full mb-1">
-                  <div className="font-semibold text-sm text-slate-200 tracking-wide">
-                    {sess.customer_phone}
+                {isUnread && !isSelected && (
+                  <span className="absolute left-1.5 top-4 w-1.5 h-1.5 rounded-full bg-[#7C5CFC]"></span>
+                )}
+                
+                <div className="flex justify-between items-start w-full mb-1 pl-3">
+                  <div className={`font-semibold text-sm tracking-wide truncate ${isSelected ? 'text-[#F5F5F5]' : 'text-[#F5F5F5]'}`}>
+                    {sess.customer_phone.substring(0, 15)}
                   </div>
-                  <div className="text-[10px] text-slate-500 font-mono">
+                  <div className="text-[10px] text-[#555] shrink-0">
                     {formatTime(sess.last_message_time)}
                   </div>
                 </div>
 
-                <div className="text-xs text-slate-400 line-clamp-1 mb-3 w-full pr-2">
+                <div className="text-xs text-[#888] line-clamp-1 mb-2.5 w-full pl-3 pr-2">
                   {sess.last_message_content || "..."}
                 </div>
 
-                <div className="flex items-center justify-between w-full">
+                <div className="flex items-center justify-between w-full pl-3">
                   {renderStatusBadge(sess.status)}
-                  {needsHuman && (
-                    <span className="text-[10px] text-red-400 font-semibold animate-pulse">
-                      Requires Handover
-                    </span>
-                  )}
                 </div>
               </button>
             );

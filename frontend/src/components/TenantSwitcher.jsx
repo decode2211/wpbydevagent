@@ -1,15 +1,6 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../api/client";
-import { Sofa, ShieldAlert, Cpu } from "lucide-react";
 
-/**
- * TenantSwitcher Component
- * Fetches all active tenants and displays them as buttons to switch views.
- * 
- * Props:
- * - activeTenantId: string (current active tenant ID)
- * - setActiveTenantId: function (setter for active tenant ID)
- */
 export default function TenantSwitcher({ activeTenantId, setActiveTenantId }) {
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +12,6 @@ export default function TenantSwitcher({ activeTenantId, setActiveTenantId }) {
         setLoading(true);
         const response = await apiClient.get("/api/tenants");
         setTenants(response.data);
-        // Default to the first tenant if none is selected
         if (response.data.length > 0 && !activeTenantId) {
           setActiveTenantId(response.data[0].tenant_id);
         }
@@ -29,7 +19,6 @@ export default function TenantSwitcher({ activeTenantId, setActiveTenantId }) {
       } catch (err) {
         console.error("Error fetching tenants:", err);
         setError("Failed to load tenants");
-        // Fallback static tenants for local design mockup preview
         const staticTenants = [
           { tenant_id: "tenant_luxfurn", name: "LuxFurn" },
           { tenant_id: "tenant_autocare", name: "AutoCare" },
@@ -45,57 +34,53 @@ export default function TenantSwitcher({ activeTenantId, setActiveTenantId }) {
   }, []);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2 px-3 py-1">
-        <Cpu className="w-5 h-5 text-indigo-400" />
-        <span className="text-sm font-semibold tracking-wider uppercase text-slate-400">Workspaces</span>
+    <div className="flex flex-col">
+      <div className="flex items-center gap-3 px-5 py-5 mb-2">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 5C6 3.89543 6.89543 3 8 3H16C17.1046 3 18 3.89543 18 5V14L13 19H8C6.89543 19 6 18.1046 6 17V5Z" fill="#7C5CFC" fillOpacity="0.8"/>
+          <path d="M10 9C10 7.89543 10.8954 7 12 7H20C21.1046 7 22 7.89543 22 9V18L17 23H12C10.8954 23 10 22.1046 10 21V9Z" fill="#00D4AA" fillOpacity="0.9"/>
+        </svg>
+        <span className="text-base font-bold tracking-wide text-[#F5F5F5]">Nexus</span>
       </div>
 
-      {loading && tenants.length === 0 ? (
-        <div className="px-3 py-2 text-xs text-slate-500">Loading workspaces...</div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {tenants.map((tenant) => {
+      <div className="flex flex-col gap-1 px-3 pb-3">
+        {loading && tenants.length === 0 ? (
+          <div className="px-2 py-2 text-xs text-[#555] animate-pulse">Loading workspaces...</div>
+        ) : (
+          tenants.map((tenant) => {
             const isActive = tenant.tenant_id === activeTenantId;
             const isLux = tenant.tenant_id === "tenant_luxfurn";
+            const initial = tenant.name.charAt(0);
 
             return (
               <button
                 key={tenant.tenant_id}
                 onClick={() => setActiveTenantId(tenant.tenant_id)}
-                className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border text-left transition-all duration-300 ${
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded transition-colors text-left border ${
                   isActive
-                    ? "bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-950/40"
-                    : "bg-slate-900/50 border-slate-800 text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+                    ? "bg-[#1E1A2E] border-[#1E1A2E] border-l-[3px] border-l-[#7C5CFC]"
+                    : "bg-[#1A1A1A] border-[#2A2A2A] hover:bg-[#1F1F1F] border-l-[3px] border-l-[#1A1A1A] hover:border-l-[#1F1F1F]"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${isActive ? "bg-indigo-500 text-white" : "bg-slate-800 text-slate-400"}`}>
-                    {isLux ? <Sofa className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isLux ? 'bg-amber-900/40 text-amber-500' : 'bg-blue-900/40 text-blue-500'}`}>
+                    {initial}
                   </div>
                   <div>
-                    <div className="font-semibold text-sm">{tenant.name}</div>
-                    <div className="text-xs opacity-75">{isLux ? "Premium Sales" : "Service & Support"}</div>
+                    <div className={`text-sm font-semibold ${isActive ? 'text-[#F5F5F5]' : 'text-[#F5F5F5]'}`}>
+                      {tenant.name}
+                    </div>
+                    <div className="text-[10px] text-[#888]">
+                      {isLux ? "Premium Sales" : "Service & Support"}
+                    </div>
                   </div>
                 </div>
-                {isActive && (
-                  <span className="flex h-2 w-2 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                  </span>
-                )}
+                <div className="w-1.5 h-1.5 rounded-full bg-[#00D4AA]"></div>
               </button>
             );
-          })}
-        </div>
-      )}
-
-      {error && (
-        <div className="mt-2 p-3 bg-red-950/20 border border-red-900/40 rounded-lg text-xs text-red-400 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-          Offline preview active
-        </div>
-      )}
+          })
+        )}
+      </div>
     </div>
   );
 }
