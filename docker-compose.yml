@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: whatsapp_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - whatsapp_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: whatsapp_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DB_NAME=whatsapp_agent
+      - ENVIRONMENT=development
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+    networks:
+      - whatsapp_net
+
+  frontend:
+    image: node:20-slim
+    container_name: whatsapp_frontend
+    working_dir: /frontend
+    volumes:
+      - ./frontend:/frontend
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host"
+    depends_on:
+      - backend
+    networks:
+      - whatsapp_net
+
+networks:
+  whatsapp_net:
+    driver: bridge
+
+volumes:
+  mongodb_data:
