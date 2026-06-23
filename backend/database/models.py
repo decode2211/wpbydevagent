@@ -5,6 +5,7 @@ Includes Tenant, ChatSession, and MessageLog schemas with ObjectID mapping suppo
 
 from datetime import datetime
 from typing import Annotated, Dict, Optional
+from bson import ObjectId
 from pydantic import BaseModel, BeforeValidator, Field
 
 # Custom type for handling MongoDB's ObjectId as string in Pydantic V2
@@ -15,7 +16,7 @@ class Tenant(BaseModel):
     """
     Model representing a tenant (e.g. LuxFurn or AutoCare).
     """
-    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    id: Optional[PyObjectId] = Field(alias="_id", default_factory=lambda: str(ObjectId()))
     tenant_id: str  # e.g., "tenant_luxfurn"
     name: str  # e.g., "LuxFurn"
     system_prompt: str
@@ -42,7 +43,7 @@ class ChatSession(BaseModel):
     """
     Model representing an ongoing customer chat session.
     """
-    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    id: Optional[PyObjectId] = Field(alias="_id", default_factory=lambda: str(ObjectId()))
     session_id: str  # f"{tenant_id}_{customer_phone}"
     tenant_id: str
     customer_phone: str
@@ -69,7 +70,7 @@ class MessageLog(BaseModel):
     """
     Model representing a logged incoming or outgoing WhatsApp message.
     """
-    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    id: Optional[PyObjectId] = Field(alias="_id", default_factory=lambda: str(ObjectId()))
     session_id: str
     tenant_id: str
     direction: str  # "inbound" | "outbound"

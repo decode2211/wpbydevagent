@@ -39,9 +39,8 @@ class WhatsAppClient:
         }
 
     async def _send_request(self, payload: dict) -> dict:
-        """Sends an async POST request to the Graph API with automatic retries."""
+        """Sends an async POST request to the Graph API with automatic retries on 5xx only."""
         if self.is_mocked:
-            # Simulate network latency and return mock response
             logger.info(f"[SIMULATED WHATSAPP OUTBOUND] Payload: {payload}")
             return {
                 "messaging_product": "whatsapp",
@@ -50,7 +49,7 @@ class WhatsAppClient:
             }
 
         async with httpx.AsyncClient() as client:
-            for attempt in range(3):  # Simple retry loop for 5xx errors
+            for attempt in range(3):  # Retry loop for 5xx errors only
                 try:
                     response = await client.post(
                         self.base_url,
@@ -58,6 +57,12 @@ class WhatsAppClient:
                         headers=self._get_headers(),
                         timeout=10.0
                     )
+
+                    # 4xx errors: fail immediately, no retry
+                    if 400 <= response.status_code < 500:
+                        response.raise_for_status()
+
+                    # 5xx errors: retry up to 3 times
                     if response.status_code >= 500:
                         logger.warning(f"Meta API 5xx error (Attempt {attempt+1}): {response.text}")
                         if attempt == 2:
@@ -66,6 +71,9 @@ class WhatsAppClient:
 
                     response.raise_for_status()
                     return response.json()
+
+                except httpx.HTTPStatusError:
+                    raise  # Re-raise immediately for 4xx, already handled above
                 except httpx.HTTPError as e:
                     logger.error(f"HTTP error during WhatsApp send: {e}")
                     if attempt == 2:
@@ -85,7 +93,10 @@ class WhatsAppClient:
         await self._send_request(payload)
 
     async def send_typing_indicator(self, to: str) -> None:
-        """Sends a typing indicator to the user (auto-expires after 25s)."""
+        """
+        Sends a typing indicator to the user (auto-expires after 25s).
+        Silently ignored if unsupported (e.g. Meta test numbers return 400).
+        """
         payload = {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
@@ -95,7 +106,10 @@ class WhatsAppClient:
                 "type": "text"
             }
         }
-        await self._send_request(payload)
+        try:
+            await self._send_request(payload)
+        except Exception:
+            logger.debug("Typing indicator not supported (likely test number) — skipping.")
 
     async def send_text(self, to: str, body: str) -> str:
         """Sends a text message with markdown support. Returns the message ID (wamid)."""

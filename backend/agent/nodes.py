@@ -464,6 +464,7 @@ async def _run_actual_llm(provider: str, messages: list, media_library: dict) ->
         import os
         if provider == "groq" and settings.GROQ_API_KEY:
             os.environ["GROQ_API_KEY"] = settings.GROQ_API_KEY
+            # pyrefly: ignore [missing-import]
             from langchain_groq import ChatGroq
             llm = ChatGroq(
                 model="llama-3.1-8b-instant",
